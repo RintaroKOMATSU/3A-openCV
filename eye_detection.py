@@ -25,7 +25,11 @@ cap.set(cv2.CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT)
 shm_name = "landmarks"
 lock= Lock()
 shared_data = np.zeros(24)
-shm = shared_memory.SharedMemory(name = shm_name, create = True, size = shared_data.nbytes)
+shm = None
+try:
+    shm = shared_memory.SharedMemory(name = shm_name, create = True, size = shared_data.nbytes)
+except:
+    shm = shared_memory.SharedMemory(name = shm_name, create = False, size = shared_data.nbytes)
 buffer = np.ndarray(shared_data.shape, dtype=shared_data.dtype, buffer=shm.buf)
 #set eye landmarks
 right_eye_landmarks = [263, 386, 374, 362, 380, 373]

@@ -1,7 +1,6 @@
 import cv2
 import mediapipe as mp
 import numpy as np
-import os
 from multiprocessing import shared_memory, Lock
 
 #camera setting

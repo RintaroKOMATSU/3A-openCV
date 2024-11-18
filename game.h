@@ -9,6 +9,8 @@
 #include "utility.h"
 #include "draw_mesh.h"
 #include "obstacle.h"
+#include "vec2.h"
+#include "ball.h"
 
 void init_GL(int argc, char *argv[]);
 void init();
@@ -18,9 +20,8 @@ void glut_display();
 void glut_keyboard(unsigned char key, int x, int y);
 void glut_mouse(int button, int state, int x, int y);
 void glut_motion(int x, int y);
-void glut_idle();
 void glut_time(int value);
-void* game(void*args);
+void game();
 
 // グローバル変数
 double g_angle1 = 0.0;
@@ -29,28 +30,18 @@ double g_distance = 10.0;
 bool g_isLeftButtonOn = false;
 bool g_isRightButtonOn = false;
 int n;
-int* eyes_state;
-int* right_eye_state;
-int* left_eye_state;
+int eyes_state;
+int right_eye_state;
+int left_eye_state;
 
 
 obstacle_list obs_list = obstacle_list();
+ball left_ball, right_ball;
 
-typedef struct game_thread_args{
-    int argc;
-    char** argv;
-    int *eye_state;
-	int *left_eye_state;
-	int *right_eye_state;
-    pthread_mutex_t* eye_state_lock;
-}GameThreadArgs;
 
-void* game(void*args) {
-    GameThreadArgs* game_args = (GameThreadArgs*)args;
-	eyes_state = game_args ->eye_state;
-	right_eye_state = game_args->right_eye_state;
-	left_eye_state = game_args->left_eye_state;
-	init_GL(game_args->argc, game_args->argv);
+
+void game(int argc, char** argv) {
+	init_GL(argc, argv);
 	/* このプログラム特有の初期化 */
 	init();
 
@@ -60,7 +51,6 @@ void* game(void*args) {
 	/* メインループ */
 	glutMainLoop(); 
 	shm_cleanup();
-	return nullptr;
 }
 
 void init_GL(int argc, char *argv[]){
@@ -72,6 +62,14 @@ void init_GL(int argc, char *argv[]){
 
 void init(){
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	//initialize shared memory
+	bool shm_init_success = shm_init();
+    while (!shm_init_success) {
+        shm_init_success = shm_init();
+        sleep(1);
+    }
+	ball_init(left_ball, right_ball);
+
 }
 	
 void set_callback_functions(){
@@ -80,7 +78,6 @@ void set_callback_functions(){
     glutMouseFunc(glut_mouse);
     glutMotionFunc(glut_motion);
     glutPassiveMotionFunc(glut_motion);
-	glutIdleFunc(glut_idle);
 	glutTimerFunc(int(1000/FRAME_RATE), glut_time, 0);
 }
 
@@ -144,25 +141,24 @@ void glut_display(){
     glRotatef(-1*g_angle2, 1, 0, 0);
 	glClear(GL_COLOR_BUFFER_BIT |GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
-	double color[3] = {100, 1, 0.5};
-    draw_sphere(0,-3-*left_eye_state, 0, 0.9, color);
-	std::cout << -3-*left_eye_state << '\n';
-	draw_sphere(0,3+*right_eye_state, 0, 0.9, color);
+
+	ball_draw(left_ball, right_ball);
 	obs_list.draw();
     glDisable(GL_DEPTH_TEST);
 
     glutSwapBuffers();
 }
 
-void glut_idle() {
-	glutPostRedisplay();
-}
+	
 
 void glut_time(int value) {
 	static int obs_interval_count = 0;
 	static double obs_interval = 1;//second
 	static int obs_interval_count_max = int(FRAME_RATE*obs_interval);
-	
+
+	//get eyes state from shared memory data
+	get_eyes_state(eyes_state, left_eye_state, right_eye_state);
+	ball_move(left_eye_state, right_eye_state, left_ball, right_ball);
 	if (obs_interval_count == obs_interval_count_max) {
 		obs_list.add(obstacle());
 		obs_list.del_obstacle();
@@ -171,5 +167,8 @@ void glut_time(int value) {
 	obs_interval_count ++;
 	obs_list.move();
 
+
+
 	glutTimerFunc(int(1000 / FRAME_RATE), glut_time, 0);
+	glutPostRedisplay();
 }

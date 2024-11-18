@@ -10,6 +10,11 @@
 #include "utility.h"
 #include <iostream>
 
+#define DURATION_TIME 0.01 //(second) 
+int duration_count_max = int(FRAME_RATE*DURATION_TIME);
+int duration_count = 0;
+int prev_eye_state;
+
 const char* shm_name = "landmarks";
 const size_t shm_size = 24 * sizeof(double);
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
@@ -18,6 +23,8 @@ double* data;
 
 typedef struct shm_thread_args{
     int *eye_state;
+    int *left_eye_state;
+	int *right_eye_state;
     pthread_mutex_t* eye_state_lock;
 }ShmTreadArgs;
 
@@ -25,16 +32,17 @@ typedef struct shm_thread_args{
 bool shm_init() {
     shm_fd = shm_open(shm_name, O_RDONLY, 0666);
     if (shm_fd == -1) {
-        std::cerr << "Failed to open shared memory\n";
+        std::cout << "Failed to open shared memory\r";
         return false;
     }
 
     data = (double*)mmap(0, shm_size, PROT_READ, MAP_SHARED, shm_fd, 0);
     if (data == MAP_FAILED) {
-        std::cerr << "Failed to map shared memory\n";
+        std::cout << "Failed to map shared memory\r";
         close(shm_fd);
         return false;
     }
+    std::cout << "                                     \r";
     return true;
 }
 
@@ -60,17 +68,30 @@ void shm_fetch_data(std::vector<vec2>& right_landmarks, std::vector<vec2>& left_
 //shm thread function
 void *shm(void *arg) {
     ShmTreadArgs* args = static_cast<ShmTreadArgs*>(arg);
-    shm_init();
+    bool shm_init_success = shm_init();
+    while (!shm_init_success) {
+        shm_init_success = shm_init();
+        sleep(1);
+    }
     std::vector<vec2> right_landmarks(6, vec2(0.0, 0.0));
     std::vector<vec2> left_landmarks(6, vec2(0.0, 0.0));
     while(true) {
-        shm_fetch_data(right_landmarks, left_landmarks);
-        int eyes_state = eval_eyes_state(left_landmarks, right_landmarks);
-        print_eyes_state(eyes_state);
-        usleep(int(1000/FRAME_RATE));
-        pthread_mutex_lock(args ->eye_state_lock);
-        *args->eye_state = eyes_state;
-        pthread_mutex_unlock(args->eye_state_lock);
+        if (duration_count == 0) {
+            shm_fetch_data(right_landmarks, left_landmarks);
+            int left_eye_stat, right_eye_stat;
+            int eyes_stat = eval_eyes_state(left_landmarks, right_landmarks, *args ->left_eye_state, *args -> right_eye_state);
+            print_eyes_state(eyes_stat);
+            usleep(int(1000/FRAME_RATE));
+            pthread_mutex_lock(args ->eye_state_lock);
+            *args->eye_state = eyes_stat;
+            *args->right_eye_state = right_eye_stat;
+            *args->left_eye_state = left_eye_stat;
+            pthread_mutex_unlock(args->eye_state_lock);
+        }
+        if (duration_count == duration_count_max) {
+            duration_count = 0;
+            continue;
+        }
+        duration_count ++;
     }
-    shm_cleanup();
 }

@@ -22,10 +22,10 @@ public:
         y = y0;
     }
 
-    void draw() {
+    inline void draw() {
         draw_sphere(x, y, radius, radius, color);
         double shadow_color[3] = LOAD_COLOR;
-        shadow_color[2] *= 0.7;
+        shadow_color[2] *= 0.8;
         draw_circle(x, y, 0.015, 0.9*radius, shadow_color);
     }
 };

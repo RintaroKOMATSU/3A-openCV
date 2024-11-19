@@ -39,7 +39,7 @@ public:
     double left_y;
     double right_y;
     
-    obstacle():left_y(init_left_y()), right_y(init_right_y()), verocity(20){
+    obstacle():left_y(init_left_y()), right_y(init_right_y()), verocity(10){
         x = x_min;
     }
     obstacle(double verocity): left_y(init_left_y()), right_y(init_right_y()), verocity(verocity) {

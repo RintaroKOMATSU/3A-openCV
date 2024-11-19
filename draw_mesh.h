@@ -137,3 +137,23 @@ void draw_plane(double x, double y, double z, double x_size, double y_size, doub
 	glPopMatrix();
 
 }	
+
+void draw_circle(double x0, double y0, double z0, double radius, double* hsv) {
+	glPushMatrix();
+	setColorHSV(hsv);
+    glTranslatef(x0, y0, z0);
+ 	glBegin(GL_POLYGON);
+	int n = 32;
+	double x = radius, y = 0.0;
+    double rotation_mat[2][2] = {{cos(2*M_PI/n), -sin(2*M_PI/n)}, 
+								{sin(2*M_PI/n),cos(2*M_PI/n)}};
+    for (int i = 0 ; i < n; i++) {
+        glVertex3d(x, y, 0);
+		double tmp_x = x;
+		double tmp_y = y;
+		x = rotation_mat[0][0]*tmp_x+rotation_mat[0][1]*tmp_y;
+		y = rotation_mat[1][0]*tmp_x+rotation_mat[1][1]*tmp_y;
+    }
+	glEnd();
+    glPopMatrix();
+}

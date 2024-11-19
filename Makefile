@@ -1,6 +1,6 @@
 CXX = g++
-CXXFLAGS = `pkg-config opencv4 --cflags`
-LDLIBS = `pkg-config opencv4 --libs` -lglut -lGL -lGLU
+CXXFLAGS = `pkg-config opencv4 --cflags` -O2
+LDLIBS = `pkg-config opencv4 --libs` -lglut -lGL -lGLU -lX11
 
 
 SRCS = $(wildcard *.cpp)
@@ -14,6 +14,7 @@ $(TARGET): $(OBJS)
 
 .PHONY: clean tmpclean
 clean: tmpclean
-	rm -f $(OBJS) main
+	rm -f $(OBJS)
+
 tmpclean:
 	rm -f *~

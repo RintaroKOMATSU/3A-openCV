@@ -28,14 +28,15 @@ void* thread_cv(void* args) {
 }
 
 void draw_score() {
-    cv::Point position(100, 250);
+    cv::Point position(100, 35);
     // フォント、サイズ、色の指定
 
     int fontFace = cv::FONT_HERSHEY_SIMPLEX;   // シンプルなサンセリフ体
     double fontScale = 1.0;                     // フォントのサイズ
-    cv::Scalar color(0, 255, 0);                // 緑色（BGR）
+    cv::Scalar color(255, 255, 255);                // 緑色（BGR）
     std::string text = "Score "+std::to_string(args_cv->score);
     // テキストを画像に描画
     cv::putText(frame, text,position, fontFace, fontScale, color, 2, cv::LINE_AA);
 
 }
+

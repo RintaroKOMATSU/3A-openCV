@@ -43,7 +43,7 @@ bool shm_initialized = false;
 
 obstacle_list obs_list = obstacle_list();
 ball left_ball, right_ball;
-double obs_verocity = 20;
+double obs_verocity = 11.0;
 
 
 
@@ -135,8 +135,8 @@ void glut_time(int value) {
 
 void glut_time_game() {
 	static int obs_interval_count = 0;
-	static double obs_interval = obs_verocity/30;//second
-	static int obs_interval_count_max = int(FRAME_RATE*obs_interval);
+	static double obs_interval = (double)obs_verocity/10;//second
+	static int obs_interval_count_max = int((double)FRAME_RATE*obs_interval);
 
 	//collision
 	if (collosion(left_ball, right_ball, obs_list) >= 0) {

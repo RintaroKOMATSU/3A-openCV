@@ -2,6 +2,7 @@
 
 #include "draw_mesh.h"
 #include "obstacle.h"
+#include "utility.h"
 
 class ball 
 {
@@ -9,8 +10,8 @@ class ball
 public:
     double x;
     double y;
-    double color[3] = {180, 0.5, 1};
-    const double radius = 0.85*LANE_WIDTH/2;
+    double color[3] =  BALL_COLOR;
+    const double radius = BALL_RADIUS;
 
     ball(){};
     ball(double x, double y):x(x), y(y){};
@@ -23,6 +24,9 @@ public:
 
     void draw() {
         draw_sphere(x, y, radius, radius, color);
+        double shadow_color[3] = LOAD_COLOR;
+        shadow_color[2] *= 0.7;
+        draw_circle(x, y, 0.015, 0.9*radius, shadow_color);
     }
 };
  

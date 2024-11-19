@@ -1,10 +1,10 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <X11/Xlib.h>
 #include <cmath>
 #include <GL/glut.h>
 #include <vector>
-#include <opencv2/opencv.hpp>
 #include <iostream>
 #include <unistd.h>
 #include <chrono>
@@ -21,6 +21,7 @@ using namespace std::chrono;
 void init_GL(int argc, char *argv[]);
 void init();
 void set_callback_functions();
+void minimizeWindow();
 
 void glut_display();
 void glut_keyboard(unsigned char key, int x, int y);
@@ -30,6 +31,7 @@ void glut_idle();
 void glut_time(int value);
 void glut_time_game();//game screen
 void glut_time_home();//home screen
+void game_over();
 
 double g_distance = 7.0;
 
@@ -75,7 +77,6 @@ void init(){
 	//initialize shared memory
 	shm_initialized = shm_init();
 	ball_init(left_ball, right_ball);
- 	cv::namedWindow("frame", 1);
 }
 	
 void set_callback_functions(){
@@ -98,8 +99,8 @@ void glut_keyboard(unsigned char key, int x, int y){
 void glut_display(){
 	glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(80, 1.5, 0.1, 120);
-	gluLookAt(g_distance, 0, g_distance/2,-30, 0, 0, 0, 0, 1);
+    gluPerspective(60, (double)WINDOW_X/(double)WINDOW_Y, 0.1, 120);
+	gluLookAt(7, 0, 6,-7, 0, 0, 0, 0, 1);
 	glClear(GL_COLOR_BUFFER_BIT |GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
 	draw_world();
@@ -126,7 +127,7 @@ void glut_time(int value) {
 		glut_time_game();
 	}
 	glutPostRedisplay();
-	//glReadPixels(0, 0, WINDOW_X, WINDOW_Y, GL_BGR, GL_UNSIGNED_BYTE, pixels.data());
+	glReadPixels(0, 0, WINDOW_X, WINDOW_Y, GL_BGR, GL_UNSIGNED_BYTE, args_gl->pixels.data());
 	glutTimerFunc(1, glut_time, 0);
 }
 
@@ -134,17 +135,21 @@ void glut_time(int value) {
 
 void glut_time_game() {
 	static int obs_interval_count = 0;
-	static double obs_interval = obs_verocity/20;//second
+	static double obs_interval = obs_verocity/30;//second
 	static int obs_interval_count_max = int(FRAME_RATE*obs_interval);
 
 	//collision
-	if (collosion(left_ball, right_ball, obs_list) > 0) {
-		sleep(1);
+	if (collosion(left_ball, right_ball, obs_list) >= 0) {
+		game_over();
 	}
 	//get eyes state from shared memory data
 	get_eyes_state(eyes_state, left_eye_state, right_eye_state);
 	//move balls
 	ball_move(left_eye_state, right_eye_state, left_ball, right_ball);
+
+
+		
+
 	//update obstacles
 	if (obs_interval_count == obs_interval_count_max) {
 		obs_list.add(obstacle(obs_verocity));
@@ -153,9 +158,18 @@ void glut_time_game() {
 	}
 	
 	obs_interval_count ++;
-	obs_list.move();
+	obs_list.move(args_gl ->score);
 }
 
 void glut_time_home() {
 	args_gl -> game_mode = 2;
 }
+
+void game_over() {
+	//reset
+	glReadPixels(0, 0, WINDOW_X, WINDOW_Y, GL_BGR, GL_UNSIGNED_BYTE, args_gl->pixels.data());
+	obs_list.clear();
+	args_gl ->game_mode = 1;
+	args_gl ->score= 0;
+}
+

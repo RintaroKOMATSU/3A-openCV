@@ -111,9 +111,29 @@ void draw_cube(double x, double y, double z, double x_size, double y_size , doub
 
 
 void draw_sphere(double x, double y, double z, double radius, double* hsv) {
-    setColorHSV(hsv);
     glPushMatrix();
+	setColorHSV(hsv);
     glTranslatef(x, y, z);
     glutSolidSphere(radius,32,32);
     glPopMatrix();
 }
+
+void draw_plane(double x, double y, double z, double x_size, double y_size, double* hsv) {
+	double x0 = x_size/2;
+    double y0 = y_size/2;
+	GLdouble pointA[] = {x0, y0, z};
+	GLdouble pointB[] = {-1*x0, y0, z};
+	GLdouble pointC[] = {-1*x0, -1*y0, z};
+	GLdouble pointD[] = {x0, -1*y0, z};
+	glPushMatrix();
+	setColorHSV(hsv);
+	glTranslatef(x, y, z);
+	glBegin(GL_POLYGON);
+	glVertex3dv(pointA);
+	glVertex3dv(pointB);
+	glVertex3dv(pointC);
+	glVertex3dv(pointD);
+	glEnd();
+	glPopMatrix();
+
+}	

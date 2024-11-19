@@ -2,7 +2,7 @@
 
 //window setting
 #define WINDOW_X (600)
-#define WINDOW_Y (600)
+#define WINDOW_Y (400)
 #define WINDOW_NAME "main"
 #define FRAME_RATE 60
 

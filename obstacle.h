@@ -33,14 +33,18 @@ private:
 public:
     double verocity;
     double x;
-    double x_min = -30;
+    double x_min = -80;
     double x_max = 100;
     double obstacle_color[3] = {100, 0.5, 1};
     double left_y;
     double right_y;
     
-    obstacle():x(x_min), left_y(init_left_y()), right_y(init_right_y()), verocity(10) {}
-    obstacle(double verocity): x(x_max), left_y(init_left_y()), right_y(init_right_y()), verocity(verocity){}
+    obstacle():left_y(init_left_y()), right_y(init_right_y()), verocity(20) {
+        x = x_min;
+    }
+    obstacle(double verocity): left_y(init_left_y()), right_y(init_right_y()), verocity(verocity){
+        x = x_min;
+    }
     ~obstacle() = default;
     void move_obstacle() {
         double verocity_per_frame = verocity/FRAME_RATE;
@@ -52,19 +56,29 @@ public:
         draw_cube(x, left_y, size/2, size/10, size, size, obstacle_color);
     }
 
+    
 };
 
 class obstacle_list
-
 {
 public:
     std::deque<obstacle> obs_list;
     obstacle_list() {}
     ~obstacle_list() = default;
 
+    obstacle operator[](int i) const { 
+        return obs_list[i]; 
+    }
+    obstacle& operator[](int i) {
+        return obs_list[i]; }
+
     void clear() {
         obs_list.clear();
     }
+    int size() {
+        return obs_list.size();
+    }
+
     void add(obstacle obs) {
         obs_list.push_back(obs);
     }

@@ -1,6 +1,6 @@
 CXX = g++
 CXXFLAGS = `pkg-config opencv4 --cflags` -O2
-LDLIBS = `pkg-config opencv4 --libs` -lglut -lGL -lGLU -lX11
+LDLIBS = `pkg-config opencv4 --libs` -lglut -lGL -lGLU -lX11 -lSDL2 -lSDL2_mixer
 
 
 SRCS = $(wildcard *.cpp)

@@ -4,6 +4,7 @@
 #include <cmath>
 #include <iostream>
 #include "utility.h"
+#include "vec3.h"
 
 void hsv2rgb(double *hsv, double *rgb) {
 	double h = hsv[0], s = hsv[1], v = hsv[2];
@@ -157,3 +158,18 @@ void draw_circle(double x0, double y0, double z0, double radius, double* hsv) {
 	glEnd();
     glPopMatrix();
 }
+
+void draw_fragent(vec3 point, double angle_x, double angle_y, double angle_z, double size, double* hsv) {
+	glPushMatrix();
+	setColorHSV(hsv);
+	glTranslatef(point.x(), point.y(), point.z());
+	glRotatef(angle_x, point.x(), 0, 0);
+	glRotatef(angle_y, 0, point.y(), 0);
+	glRotatef(angle_z, 0, 0, point.z());
+ 	glBegin(GL_POLYGON);
+	glVertex3d(size*0.6, 0, 0);
+	glVertex3d(-0.3*size, 0.4*size, 0);
+	glVertex3d(-0.3*size, -0.4*size, 0);
+	glEnd();
+	glPopMatrix();
+} 

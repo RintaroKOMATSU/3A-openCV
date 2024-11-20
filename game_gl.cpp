@@ -15,13 +15,13 @@
 #include "shm.h"
 #include "world.h"
 #include "game_gl.h"
+#include "sound.h"
 
 using namespace std::chrono;
 //opengl setting
 void init_GL(int argc, char *argv[]);
 void init();
 void set_callback_functions();
-void minimizeWindow();
 
 void glut_display();
 void glut_keyboard(unsigned char key, int x, int y);
@@ -42,6 +42,8 @@ int left_eye_state;
 bool shm_initialized = false;
 
 obstacle_list obs_list = obstacle_list();
+fragment_list left_fragments = fragment_list();
+fragment_list right_fragments = fragment_list();
 ball left_ball, right_ball;
 double obs_verocity = 11.0;
 
@@ -61,7 +63,6 @@ void* thread_gl(void* args) {
 	glutPostRedisplay();
 	/* メインループ */
 	glutMainLoop(); 
-	shm_cleanup();
 	return nullptr;
 }
 
@@ -77,6 +78,7 @@ void init(){
 	//initialize shared memory
 	shm_initialized = shm_init();
 	ball_init(left_ball, right_ball);
+	initAudio();
 }
 	
 void set_callback_functions(){
@@ -90,6 +92,8 @@ void glut_keyboard(unsigned char key, int x, int y){
 	case 'q':
 	case 'Q':
 	case '\033':
+		shm_write_data(0);
+		shm_cleanup();
 		exit(0);
 	}
 
@@ -104,7 +108,12 @@ void glut_display(){
 	glClear(GL_COLOR_BUFFER_BIT |GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
 	draw_world();
-	ball_draw(left_ball, right_ball);
+	if (args_gl ->game_mode == 0 ||args_gl ->game_mode == 1 ||args_gl ->game_mode == 2) {
+		ball_draw(left_ball, right_ball);
+	} else if (args_gl ->game_mode == 3) {
+		right_fragments.draw();
+		left_fragments.draw();
+	}
 	obs_list.draw();
     glDisable(GL_DEPTH_TEST);
 
@@ -125,6 +134,8 @@ void glut_time(int value) {
 		glut_time_home();
 	} else if (args_gl -> game_mode == 2) {
 		glut_time_game();
+	} else if (args_gl -> game_mode == 3) {
+		game_over();
 	}
 	glutPostRedisplay();
 	glReadPixels(0, 0, WINDOW_X, WINDOW_Y, GL_BGR, GL_UNSIGNED_BYTE, args_gl->pixels.data());
@@ -137,10 +148,11 @@ void glut_time_game() {
 	static int obs_interval_count = 0;
 	static double obs_interval = (double)obs_verocity/10;//second
 	static int obs_interval_count_max = int((double)FRAME_RATE*obs_interval);
-
 	//collision
 	if (collosion(left_ball, right_ball, obs_list) >= 0) {
-		game_over();
+		args_gl->game_mode = 3;
+		playMusic("SE/se2.mp3");
+		return ;
 	}
 	//get eyes state from shared memory data
 	get_eyes_state(eyes_state, left_eye_state, right_eye_state);
@@ -162,14 +174,29 @@ void glut_time_game() {
 }
 
 void glut_time_home() {
-	args_gl -> game_mode = 2;
 }
 
 void game_over() {
 	//reset
+	static int count_game_over = 0;
+	if (count_game_over== 0) {
+		left_fragments.init(left_ball.x, left_ball.y, left_ball.radius);
+		right_fragments.init(right_ball.x, right_ball.y, right_ball.radius);
+	} else if (count_game_over == 6*FRAME_RATE) {
+		obs_list.clear();
+
+		args_gl ->game_mode = 1;
+		args_gl ->score= 0;
+		count_game_over = 0;
+		return;
+	} else if (count_game_over == 2*FRAME_RATE) {
+		right_fragments.clear();
+		left_fragments.clear();
+		ball_reset(left_ball, right_ball);
+	}
+	count_game_over += 1;
+	left_fragments.move();
+	right_fragments.move();
 	glReadPixels(0, 0, WINDOW_X, WINDOW_Y, GL_BGR, GL_UNSIGNED_BYTE, args_gl->pixels.data());
-	obs_list.clear();
-	args_gl ->game_mode = 1;
-	args_gl ->score= 0;
 }
 

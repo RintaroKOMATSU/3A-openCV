@@ -22,8 +22,9 @@ cap.set(cv2.CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT)
 
 #initialize shared memory
 shm_name = "landmarks"
+flag = 1.0 #flag
 lock= Lock()
-shared_data = np.zeros(24)
+shared_data = np.zeros(25)
 shm = None
 try:
     shm = shared_memory.SharedMemory(name = shm_name, create = True, size = shared_data.nbytes)
@@ -33,7 +34,8 @@ buffer = np.ndarray(shared_data.shape, dtype=shared_data.dtype, buffer=shm.buf)
 #set eye landmarks
 right_eye_landmarks = [263, 386, 374, 362, 380, 373]
 left_eye_landmarks = [33, 159, 145, 133, 153, 144]
-
+#initialize flag
+buffer[24] = flag
 #loop
 with mp_face_mesh.FaceMesh(max_num_faces = 1,
                            refine_landmarks = True, 
@@ -61,9 +63,9 @@ with mp_face_mesh.FaceMesh(max_num_faces = 1,
                 shared_data[2*idx+13] = face_landmarks.landmark[landmark_idx].y
 
             lock.acquire()
-            buffer[:] = shared_data[:]
+            buffer[:24] = shared_data[:24]
+            flag = buffer[24]
             lock.release()
-
             mp_drawing.draw_landmarks(
                 image=image,
                 landmark_list=face_landmarks,
@@ -71,10 +73,10 @@ with mp_face_mesh.FaceMesh(max_num_faces = 1,
                 landmark_drawing_spec=None,
                 connection_drawing_spec=mp_drawing_styles
                 .get_default_face_mesh_contours_style())
-
-        
-        cv2.imshow('MediaPipe Face Mesh', cv2.flip(image, 1))
+        #cv2.imshow('MediaPipe Face Mesh', cv2.flip(image, 1))
         if cv2.waitKey(5) & 0xFF == 27:
+            break
+        if (flag == 0):
             break
 shm.close()
 shm.unlink()

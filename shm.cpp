@@ -12,20 +12,20 @@
 
 
 const char* shm_name = "landmarks";
-const size_t shm_size = 24 * sizeof(double);
+const size_t shm_size = 25 * sizeof(double);
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 int shm_fd;
 double* data;
 
 //initializer
 bool shm_init() {
-    shm_fd = shm_open(shm_name, O_RDONLY, 0666);
+    shm_fd = shm_open(shm_name, O_RDWR, 0666);
     if (shm_fd == -1) {
         std::cout << "Failed to open shared memory\r";
         return false;
     }
 
-    data = (double*)mmap(0, shm_size, PROT_READ, MAP_SHARED, shm_fd, 0);
+    data = (double*)mmap(0, shm_size, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
     if (data == MAP_FAILED) {
         std::cout << "Failed to map shared memory\r";
         close(shm_fd);
@@ -50,6 +50,13 @@ void shm_fetch_data(std::vector<vec2>& right_landmarks, std::vector<vec2>& left_
         right_landmarks[i] = vec2(data[2 * i], data[2 * i + 1]);
         left_landmarks[i] = vec2(data[2 * i + 12], data[2 * i + 13]);
     }
+    double flag = data[24];
+    pthread_mutex_unlock(&lock);
+}
+
+void shm_write_data(double flag) {
+    pthread_mutex_lock(&lock);
+    data[24] = flag;
     pthread_mutex_unlock(&lock);
 }
 

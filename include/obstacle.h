@@ -9,7 +9,7 @@
 class obstacle
 {
 private:
-    const double size = 0.9*LANE_WIDTH;
+    const double size = 0.8*LANE_WIDTH;
 
     double init_left_y() {
 
@@ -39,7 +39,7 @@ public:
     double left_y;
     double right_y;
     
-    obstacle():left_y(init_left_y()), right_y(init_right_y()), verocity(10){
+    obstacle():left_y(init_left_y()), right_y(init_right_y()), verocity(20){
         x = x_min;
     }
     obstacle(double verocity): left_y(init_left_y()), right_y(init_right_y()), verocity(verocity) {
@@ -47,7 +47,7 @@ public:
     }
     ~obstacle() = default;
     void move_obstacle(int& score) {
-        double verocity_per_frame = verocity/FRAME_RATE;
+        double verocity_per_frame = verocity/(double)FRAME_RATE;
         double x_before = x;
         x += verocity_per_frame;
         if (x_before < BALL_RADIUS && x > BALL_RADIUS) {

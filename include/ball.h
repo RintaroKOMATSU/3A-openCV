@@ -91,8 +91,8 @@ public:
     vec3 direction;
     double angle_x, angle_y, angle_z;
     double color[3] =  BALL_COLOR;
-    double verocity = 9;
-    const double size = 0.5*BALL_RADIUS;
+    double verocity = 18;
+    const double size = 0.6*BALL_RADIUS;
     double radius = 0.3*BALL_RADIUS;
     double distance;
 

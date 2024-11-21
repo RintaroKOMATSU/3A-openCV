@@ -13,3 +13,5 @@ typedef struct {
 } args_game;
 
 void* thread_gl(void* args);
+
+void game_quit();

@@ -1,7 +1,5 @@
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <X11/Xlib.h>
+
 #include <cmath>
 #include <GL/glut.h>
 #include <vector>
@@ -32,6 +30,9 @@ void glut_time(int value);
 void glut_time_game();//game screen
 void glut_time_home();//home screen
 void game_over();
+void game_over1();
+
+
 
 double g_distance = 7.0;
 
@@ -45,7 +46,7 @@ obstacle_list obs_list = obstacle_list();
 fragment_list left_fragments = fragment_list();
 fragment_list right_fragments = fragment_list();
 ball left_ball, right_ball;
-double obs_verocity = 11.0;
+double obs_verocity = 20.0;
 
 
 
@@ -83,21 +84,7 @@ void init(){
 	
 void set_callback_functions(){
 	glutDisplayFunc(glut_display);
-    glutKeyboardFunc(glut_keyboard);
 	glutTimerFunc(int(1000/FRAME_RATE), glut_time, 0);
-}
-
-void glut_keyboard(unsigned char key, int x, int y){
-	switch(key){
-	case 'q':
-	case 'Q':
-	case '\033':
-		shm_write_data(0);
-		shm_cleanup();
-		exit(0);
-	}
-
-	glutPostRedisplay();
 }
 
 void glut_display(){
@@ -120,10 +107,8 @@ void glut_display(){
     glutSwapBuffers();
 }
 
-	
-
 void glut_time(int value) {
-	auto t1 = high_resolution_clock::now();
+	auto t1 = system_clock::now();
 	if (args_gl-> game_mode == 0) {
 		if (!shm_initialized) {
 			shm_initialized =  shm_init();
@@ -136,17 +121,21 @@ void glut_time(int value) {
 		glut_time_game();
 	} else if (args_gl -> game_mode == 3) {
 		game_over();
+	} else if (args_gl ->game_mode == 5) {
+		game_over1();
 	}
 	glutPostRedisplay();
 	glReadPixels(0, 0, WINDOW_X, WINDOW_Y, GL_BGR, GL_UNSIGNED_BYTE, args_gl->pixels.data());
-	glutTimerFunc(1, glut_time, 0);
+	auto t2 = system_clock::now();
+	int duration = int(duration_cast<milliseconds>(t2-t1).count());
+	glutTimerFunc(fmax(1, int(1000/(double)FRAME_RATE)-duration), glut_time, 0);
 }
 
 
 
 void glut_time_game() {
 	static int obs_interval_count = 0;
-	static double obs_interval = (double)obs_verocity/10;//second
+	static double obs_interval = (double)obs_verocity/40;//second
 	static int obs_interval_count_max = int((double)FRAME_RATE*obs_interval);
 	//collision
 	if (collosion(left_ball, right_ball, obs_list) >= 0) {
@@ -174,6 +163,9 @@ void glut_time_game() {
 }
 
 void glut_time_home() {
+	//move balls
+	ball_move(left_eye_state, right_eye_state, left_ball, right_ball);
+
 }
 
 void game_over() {
@@ -182,14 +174,11 @@ void game_over() {
 	if (count_game_over== 0) {
 		left_fragments.init(left_ball.x, left_ball.y, left_ball.radius);
 		right_fragments.init(right_ball.x, right_ball.y, right_ball.radius);
-	} else if (count_game_over == 6*FRAME_RATE) {
-		obs_list.clear();
-
-		args_gl ->game_mode = 1;
-		args_gl ->score= 0;
+	} else if (count_game_over == 4*FRAME_RATE) {
+		args_gl ->game_mode = 4;
 		count_game_over = 0;
 		return;
-	} else if (count_game_over == 2*FRAME_RATE) {
+	} else if (count_game_over == 1*FRAME_RATE) {
 		right_fragments.clear();
 		left_fragments.clear();
 		ball_reset(left_ball, right_ball);
@@ -200,3 +189,14 @@ void game_over() {
 	glReadPixels(0, 0, WINDOW_X, WINDOW_Y, GL_BGR, GL_UNSIGNED_BYTE, args_gl->pixels.data());
 }
 
+void game_over1() {
+	obs_list.clear();
+	args_gl ->game_mode = 2;
+}
+
+void game_quit() {
+    shm_write_data(0.0);
+	shm_cleanup();
+	cleanupAudio();
+    exit(0);
+}

@@ -1,9 +1,10 @@
 #pragma once
+
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_mixer.h>
 #include <iostream>
 
-bool initAudio() {
+inline bool initAudio() {
     if (SDL_Init(SDL_INIT_AUDIO) < 0) {
         std::cerr << "Failed to initialize SDL: " << SDL_GetError() << std::endl;
         return false;
@@ -15,7 +16,7 @@ bool initAudio() {
     return true;
 }
 
-void playMusic(const char* file) {
+inline void playMusic(const char* file) {
     Mix_Music* music = Mix_LoadMUS(file);
     if (!music) {
         std::cerr << "Failed to load music: " << Mix_GetError() << std::endl;
@@ -25,7 +26,7 @@ void playMusic(const char* file) {
     return;
 }
 
-void cleanupAudio() {
+inline void cleanupAudio() {
     Mix_CloseAudio();
     SDL_Quit();
 }

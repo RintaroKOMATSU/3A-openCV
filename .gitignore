@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# C/C++ build artifacts
+*.o
+*.a
+*.so
+*.out
+bin/
+
+# Claude Code
+.claude/
+
+# Editor / OS
+*~
+*.swp
+.vscode/
+.DS_Store
